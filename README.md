@@ -1,6 +1,3 @@
-# SlimFeedAPI
-Simple RSS parser to json or jsonp like Google Feed API
-
 SlimFeedAPI
 =========================
 
@@ -34,5 +31,5 @@ composer install
 Support / Contributing 
 -------------------
 
-Contributing code is both an important and effective way to improve the TNW Mobile project and its capabilities.  
+Contributing code is both an important and effective way to improve the SlimFeedAPI project and its capabilities.  
 If you would like contribute go to the official Github repo. You can fork the plugin or open a new issue / feature request.
