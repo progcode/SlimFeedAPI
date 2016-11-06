@@ -103,22 +103,22 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
 
         foreach($items as $key => $item) {
 
-            $title = $item->getElementsByTagName('title')->item(0)->firstChild->nodeValue;
-            $link = $item->getElementsByTagName('link')->item(0)->firstChild->nodeValue;
-            $publishedDate = $item->getElementsByTagName('pubDate')->item(0)->firstChild->nodeValue;
+            $title          = $item->getElementsByTagName('title')->item(0)->firstChild->nodeValue;
+            $link           = $item->getElementsByTagName('link')->item(0)->firstChild->nodeValue;
+            $publishedDate  = $item->getElementsByTagName('pubDate')->item(0)->firstChild->nodeValue;
             $contentSnippet = truncate(removeTags($item->getElementsByTagName('description')->item(0)->firstChild->nodeValue));
-            $content = $item->getElementsByTagName('description')->item(0)->firstChild->nodeValue;
-            $categories = $item->getElementsByTagName('category')->item(0)->firstChild->nodeValue;
-            $guid = $item->getElementsByTagName('guid')->item(0)->firstChild->nodeValue;
+            $content        = $item->getElementsByTagName('description')->item(0)->firstChild->nodeValue;
+            $categories     = $item->getElementsByTagName('category')->item(0)->firstChild->nodeValue;
+            $guid           = $item->getElementsByTagName('guid')->item(0)->firstChild->nodeValue;
 
-            $json['entries'][$key]['title'] = $title;
-            $json['entries'][$key]['link'] = $link;
-            $json['entries'][$key]['author'] = "Author";
-            $json['entries'][$key]['publishedDate'] = $publishedDate;
-            $json['entries'][$key]['contentSnippet'] = $contentSnippet;
-            $json['entries'][$key]['content'] = $content;
-            $json['entries'][$key]['categories'] = $categories;
-            $json['entries'][$key]['guid'] = $guid;
+            $json['entries'][$key]['title']             = $title;
+            $json['entries'][$key]['link']              = $link;
+            $json['entries'][$key]['author']            = "Author";
+            $json['entries'][$key]['publishedDate']     = $publishedDate;
+            $json['entries'][$key]['contentSnippet']    = $contentSnippet;
+            $json['entries'][$key]['content']           = $content;
+            $json['entries'][$key]['categories']        = $categories;
+            $json['entries'][$key]['guid']              = $guid;
 
         }
 
