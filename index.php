@@ -55,6 +55,22 @@ function truncate($string, $length=130, $append="...") {
     return $string;
 }
 
+/**
+ * @param $rss
+ * @return bool
+ *
+ * Validate RSS url
+ */
+function validateRssUrl($rss) {
+    $check = simplexml_load_string(file_get_contents($rss));
+
+    if($check) {
+        return true;
+    }
+
+    return false;
+}
+
 $app->get('/', function ($request, $response) {
     $response->write("Slim Feed API v1.0");
     return $response;
@@ -66,13 +82,13 @@ $app->get('/', function ($request, $response) {
 $app->get('/v1/feed/load', function(Request $request,  Response $response, $args = []) use($app) {
 
     /** @var $route \Slim\Route */
-    $feed_url = isset($request->getQueryParams()['q']) ? $request->getQueryParams()['q'] : null;
-    $jsonp_callback = isset($request->getQueryParams()['callback']) ? $request->getQueryParams()['callback'] : null;
+    $feed_url           = isset($request->getQueryParams()['q']) ? $request->getQueryParams()['q'] : null;
+    $jsonp_callback     = isset($request->getQueryParams()['callback']) ? $request->getQueryParams()['callback'] : null;
 
     try
     {
 
-        if(!$feed_url) {
+        if(!$feed_url || !validateRssUrl($feed_url)) {
             $response->write("Malformed API request - missing or invalid Feed URL!");
             return $response;
         }
