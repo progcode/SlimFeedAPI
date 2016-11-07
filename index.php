@@ -88,9 +88,22 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
     try
     {
 
+        /**
+         * Validate RSS url
+         */
         if(!$feed_url || !validateRssUrl($feed_url)) {
-            $response->write("Malformed API request - missing or invalid Feed URL!");
-            return $response;
+            $message = array(
+                "responseData" => null,
+                "responseDetails" => "Malformed API request - Feed could not be loaded.",
+                "responseStatus" => 400
+            );
+            $response->getBody()->write(json_encode($message));
+
+            $apiResponse = $response->withHeader(
+                'Content-type',
+                'application/json; charset=utf-8'
+            );
+            return $apiResponse;
         }
 
         $feed = new DOMDocument();
