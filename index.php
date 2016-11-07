@@ -103,6 +103,7 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
                 'Content-type',
                 'application/json; charset=utf-8'
             );
+
             return $apiResponse;
         }
 
@@ -160,8 +161,19 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
         return $apiResponse;
 
     } catch(PDOException $e) {
-        $response->withStatus(404);
-        echo '{"responseData":{"api.error":'. $e->getMessage() .'}}';
+        $message = array(
+            "responseData" => null,
+            "responseDetails" => $e->getMessage(),
+            "responseStatus" => 400
+        );
+        $response->getBody()->write(json_encode($message));
+
+        $apiResponse = $response->withHeader(
+            'Content-type',
+            'application/json; charset=utf-8'
+        );
+
+        return $apiResponse;
     }
 
 });
