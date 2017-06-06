@@ -23,7 +23,7 @@ $config = [
 ];
 $app = new \Slim\App($config);
 
-$api_key = base64_encode('pFGT2gBAbt8Z6UP8i6KJJCDplXz2I172');
+$api_key = base64_encode('************************');
 define('API_KEY', $api_key);
 
 /**
