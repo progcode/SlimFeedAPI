@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Slim Feed API
  *
@@ -10,7 +9,7 @@
  * @copyright 2016. WebPositive (https://progweb.hu)
  * @license   https://progweb.hu/license
  * @link      https://progweb.hu
- * @version   1.0
+ * @version   1.0.1
  */
 
 require 'vendor/autoload.php';
@@ -23,6 +22,9 @@ $config = [
     ],
 ];
 $app = new \Slim\App($config);
+
+$api_key = base64_encode('pFGT2gBAbt8Z6UP8i6KJJCDplXz2I172');
+define('API_KEY', $api_key);
 
 /**
  * @param $str
@@ -45,13 +47,11 @@ function removeTags($str) {
  */
 function truncate($string, $length=130, $append="...") {
     $string = trim($string);
-
     if(strlen($string) > $length) {
         $string = wordwrap($string, $length);
         $string = explode("\n", $string, 2);
         $string = $string[0] . $append;
     }
-
     return $string;
 }
 
@@ -63,60 +63,50 @@ function truncate($string, $length=130, $append="...") {
  */
 function validateRssUrl($rss) {
     $check = simplexml_load_string(file_get_contents($rss));
-
     if($check) {
         return true;
     }
-
     return false;
 }
 
 $app->get('/', function ($request, $response) {
-    $response->write("Slim Feed API v1.0");
+    $response->write("Slim Feed API v1.0.1");
     return $response;
 });
-
 /**
  * Parse RSS xml to JSON
  */
 $app->get('/v1/feed/load', function(Request $request,  Response $response, $args = []) use($app) {
-
     /** @var $route \Slim\Route */
     $feed_url           = isset($request->getQueryParams()['q']) ? $request->getQueryParams()['q'] : null;
     $jsonp_callback     = isset($request->getQueryParams()['callback']) ? $request->getQueryParams()['callback'] : null;
+    $request_api_key    = isset($request->getQueryParams()['apiKey']) ? $request->getQueryParams()['apiKey'] : null;
 
     try
     {
-
         /**
          * Validate RSS url
          */
-        if(!$feed_url || !validateRssUrl($feed_url)) {
+        if(API_KEY != $request_api_key || !$feed_url || !validateRssUrl($feed_url)) {
             $message = array(
                 "responseData" => null,
-                "responseDetails" => "Malformed API request - Feed could not be loaded.",
+                "responseDetails" => "Malformed API request - Feed could not be loaded / Invalid API_KEY!",
                 "responseStatus" => 400
             );
-            $response->getBody()->write(json_encode($message));
-
+            $response->getBody()->write($jsonp_callback. '(' . json_encode($message) . ');');
             $apiResponse = $response->withHeader(
                 'Content-type',
                 'application/json; charset=utf-8'
             );
-
             return $apiResponse;
         }
 
         $feed = new DOMDocument();
         $feed->load($feed_url);
-
         $items = $feed->getElementsByTagName('channel')->item(0)->getElementsByTagName('item');
-
         $feed = array();
         $json['entries'] = array();
-
         foreach($items as $key => $item) {
-
             $title          = $item->getElementsByTagName('title')->item(0)->firstChild->nodeValue;
             $link           = $item->getElementsByTagName('link')->item(0)->firstChild->nodeValue;
             $publishedDate  = $item->getElementsByTagName('pubDate')->item(0)->firstChild->nodeValue;
@@ -124,7 +114,6 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
             $content        = $item->getElementsByTagName('description')->item(0)->firstChild->nodeValue;
             $categories     = $item->getElementsByTagName('category')->item(0)->firstChild->nodeValue;
             $guid           = $item->getElementsByTagName('guid')->item(0)->firstChild->nodeValue;
-
             $json['entries'][$key]['title']             = $title;
             $json['entries'][$key]['link']              = $link;
             $json['entries'][$key]['author']            = "Author";
@@ -133,7 +122,6 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
             $json['entries'][$key]['content']           = $content;
             $json['entries'][$key]['categories']        = $categories;
             $json['entries'][$key]['guid']              = $guid;
-
         }
 
         /**
@@ -148,7 +136,6 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
         if($jsonp_callback) {
             $response->getBody()->write($feed_jsonp);
         }
-
         else {
             $response->getBody()->write(json_encode($feed));
         }
@@ -166,8 +153,7 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
             "responseDetails" => $e->getMessage(),
             "responseStatus" => 400
         );
-        $response->getBody()->write(json_encode($message));
-
+        $response->getBody()->write($jsonp_callback. '(' . json_encode($message) . ');');
         $apiResponse = $response->withHeader(
             'Content-type',
             'application/json; charset=utf-8'
@@ -175,8 +161,6 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
 
         return $apiResponse;
     }
-
 });
 
 $app->run();
-
