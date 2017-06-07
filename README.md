@@ -8,6 +8,11 @@ Simple RSS parser to json or jsonp like Google Feed API
 Releases	
 -------------
 
+> **Version 1.0.2:**
+>
+> - Minor bug fixes
+> - Minor improvements
+
 > **Version 1.0.0:**
 >
 > - First release
