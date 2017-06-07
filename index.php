@@ -9,13 +9,12 @@
  * @copyright 2016. WebPositive (https://progweb.hu)
  * @license   https://progweb.hu/license
  * @link      https://progweb.hu
- * @version   1.0.1
+ * @version   1.0.2
  */
 
 require 'vendor/autoload.php';
 use Psr\Http\Message\RequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
-
 $config = [
     'settings' => [
         'displayErrorDetails' => true,
@@ -23,7 +22,7 @@ $config = [
 ];
 $app = new \Slim\App($config);
 
-$api_key = base64_encode('************************');
+$api_key = base64_encode('**********************');
 define('API_KEY', $api_key);
 
 /**
@@ -45,7 +44,7 @@ function removeTags($str) {
  *
  * Truncate description to contentSnippet
  */
-function truncate($string, $length=130, $append="...") {
+function truncate($string, $length=150, $append="...") {
     $string = trim($string);
     if(strlen($string) > $length) {
         $string = wordwrap($string, $length);
@@ -70,9 +69,10 @@ function validateRssUrl($rss) {
 }
 
 $app->get('/', function ($request, $response) {
-    $response->write("Slim Feed API v1.0.1");
+    $response->write("Slim Feed API v1.0.2");
     return $response;
 });
+
 /**
  * Parse RSS xml to JSON
  */
@@ -80,6 +80,7 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
     /** @var $route \Slim\Route */
     $feed_url           = isset($request->getQueryParams()['q']) ? $request->getQueryParams()['q'] : null;
     $jsonp_callback     = isset($request->getQueryParams()['callback']) ? $request->getQueryParams()['callback'] : null;
+    $is_encoded         = isset($request->getQueryParams()['is_encoded']) ? $request->getQueryParams()['is_encoded'] : null;
     $request_api_key    = isset($request->getQueryParams()['apiKey']) ? $request->getQueryParams()['apiKey'] : null;
 
     try
@@ -106,20 +107,39 @@ $app->get('/v1/feed/load', function(Request $request,  Response $response, $args
         $items = $feed->getElementsByTagName('channel')->item(0)->getElementsByTagName('item');
         $feed = array();
         $json['entries'] = array();
+
         foreach($items as $key => $item) {
             $title          = $item->getElementsByTagName('title')->item(0)->firstChild->nodeValue;
             $link           = $item->getElementsByTagName('link')->item(0)->firstChild->nodeValue;
             $publishedDate  = $item->getElementsByTagName('pubDate')->item(0)->firstChild->nodeValue;
-            $contentSnippet = truncate(removeTags($item->getElementsByTagName('description')->item(0)->firstChild->nodeValue));
-            $content        = $item->getElementsByTagName('description')->item(0)->firstChild->nodeValue;
+            // $contentSnippet = truncate(removeTags($item->getElementsByTagName('description')->item(0)->firstChild->nodeValue));
+
+            switch ($is_encoded)
+            {
+                case 0:
+                    $xmlElem = 'description';
+                    break;
+                case 1:
+                    $xmlElem = 'encoded';
+                    break;
+                default:
+                    $xmlElem = 'description';
+            }
+
+            $contentSnippet = truncate(removeTags($item->getElementsByTagName($xmlElem)->item(0)->firstChild->nodeValue));
+            $content        = strip_tags($item->getElementsByTagName($xmlElem)->item(0)->firstChild->nodeValue, '<p>, <br/>, <br />, <br>, <b>, <strong>, <ul>, <li>');
             $categories     = $item->getElementsByTagName('category')->item(0)->firstChild->nodeValue;
             $guid           = $item->getElementsByTagName('guid')->item(0)->firstChild->nodeValue;
+
+            preg_match('/< *img[^>]*src *= *["\']?([^"\']*)/i', $item->getElementsByTagName($xmlElem)->item(0)->firstChild->nodeValue, $contentImg);
+
             $json['entries'][$key]['title']             = $title;
             $json['entries'][$key]['link']              = $link;
             $json['entries'][$key]['author']            = "Author";
             $json['entries'][$key]['publishedDate']     = $publishedDate;
             $json['entries'][$key]['contentSnippet']    = $contentSnippet;
             $json['entries'][$key]['content']           = $content;
+            $json['entries'][$key]['contentimg']        = $contentImg[1];
             $json['entries'][$key]['categories']        = $categories;
             $json['entries'][$key]['guid']              = $guid;
         }
